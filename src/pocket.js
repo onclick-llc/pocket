@@ -54,8 +54,8 @@ export default ({ state, view }, render) => {
     render(view(state, dispatch))
   })
 
-  const dispatch = (action, data) => {
-    const result = action(state, data)
+  const dispatch = (action, ...data) => {
+    const result = action(state, ...data)
 
     FF_QUIET && console.log(
       'Dispatch >>',

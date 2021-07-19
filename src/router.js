@@ -1,7 +1,7 @@
 
-const FF_ROUTE_EVENTS = FF_ROUTE_EVENTS ?? true
-const FF_ROUTE_MIDDLEWARE = FF_ROUTE_MIDDLEWARE ?? true
-const FF_ROUTE_REWRITES = FF_ROUTE_REWRITES ?? true
+const FF_ROUTE_EVENTS = FF_ROUTE_EVENTS ?? false
+const FF_ROUTE_MIDDLEWARE = FF_ROUTE_MIDDLEWARE ?? false
+const FF_ROUTE_REWRITES = FF_ROUTE_REWRITES ?? false
 
 /**
  * Decodes a query string to an object

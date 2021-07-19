@@ -1,5 +1,5 @@
 {
-  "name": "pocket",
+  "name": "@onclick/pocket",
   "version": "0.0.0",
   "description": "Embeddable micro framework for building web apps.",
   "license": "MIT",

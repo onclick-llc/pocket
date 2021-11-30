@@ -6,15 +6,15 @@ const FF_QUIET = FF_QUIET ?? false
  * @function enqueue
  */
 
-const enqueue = render => {
+function enqueue (render) {
   let lock = false
 
-  const callback = () => {
+  function callback () {
     lock = false
     render()
   }
 
-  return () => {
+  return function () {
     if (!lock) {
       lock = true
       window.requestAnimationFrame(callback)
@@ -27,10 +27,10 @@ const enqueue = render => {
  * @function collect
  */
 
-const collect = (state, render) => {
+function collect (state, render) {
   let batch = [state]
 
-  const schedule = enqueue(() => {
+  const schedule = enqueue(function () {
     Object.assign.apply(Object, batch)
     batch = [state]
     render()
@@ -38,7 +38,7 @@ const collect = (state, render) => {
 
   schedule()
 
-  return result => {
+  return function (result) {
     batch.push(result)
     schedule()
   }
@@ -49,17 +49,19 @@ const collect = (state, render) => {
  * @module pocket
  */
 
-export default ({ state, view }, render) => {
-  const push = collect(state, () => {
-    render(view(state, dispatch))
+export default function ({ state, setup }, render) {
+  const view = setup(dispatch)
+
+  const push = collect(state, function () {
+    render(view(state))
   })
 
-  const dispatch = (action, ...data) => {
-    const result = action(state, ...data)
+  function dispatch (action, data) {
+    const result = action(state, data)
 
     FF_QUIET && console.log(
       'Dispatch >>',
-      action.name || '(anon)',
+      typeof action.name === 'string' || '(anon)',
       typeof result === 'function' ? '(effect)' : JSON.stringify(result, null, 2)
     )
 
@@ -74,8 +76,5 @@ export default ({ state, view }, render) => {
     }
   }
 
-  return {
-    getState: () => state,
-    dispatch
-  }
+  return dispatch
 }

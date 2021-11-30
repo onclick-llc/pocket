@@ -171,7 +171,7 @@ export const router = ({ state, pages, rewrites, middleware }, app) => {
 
   const ctx = app({
     state,
-    view: (state, dispatch) => route.view(state, dispatch)
+    setup: route.setup
   })
 
   const applyMiddleware = /* @__PURE__ */ compile(middleware, ctx.dispatch)

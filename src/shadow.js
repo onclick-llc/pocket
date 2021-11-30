@@ -4,13 +4,13 @@ import pocket from './pocket'
 /**
  *
  *
-*/
+ */
 
-export const once = () => {
-  const storage = []
+export function once () {
   let lock = false
+  const storage = []
 
-  const handler = () => {
+  function handler () {
     lock = true
 
     for (let i = 0; i < storage.length; i++) {
@@ -18,7 +18,7 @@ export const once = () => {
     }
   }
 
-  return fn => {
+  return function (fn) {
     if (!lock) {
       storage.push(fn)
       window.requestAnimationFrame(handler)
@@ -29,17 +29,15 @@ export const once = () => {
 /**
  *
  *
-*/
+ */
 
 const mount = once()
 
-export const shadow = patch => (ref, x) => {
-  mount(() => {
-    const root = ref.vnode.node.attachShadow({ mode: 'open' })
+export const shadow = patch => (ref, app) => {
+  mount(function () {
     const div = document.createElement('div')
+    ref.vnode.node.attachShadow({ mode: 'open' }).appendChild(div)
 
-    root.appendChild(div)
-
-    x(init => pocket(init, view => patch(div, view)))
+    app(init => pocket(init, view => patch(div, view)))
   })
 }

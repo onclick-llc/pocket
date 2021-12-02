@@ -61,7 +61,7 @@ export default function ({ state, setup }, render) {
 
     FF_QUIET && console.log(
       'Dispatch >>',
-      typeof action.name === 'string' || '(anon)',
+      typeof action.name === 'string' ? action.name : '(anon)',
       typeof result === 'function' ? '(effect)' : JSON.stringify(result, null, 2)
     )
 

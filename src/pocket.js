@@ -50,10 +50,10 @@ function collect (state, render) {
  */
 
 export default function ({ state, setup }, render) {
-  const view = setup(dispatch)
+  const view = setup(state, dispatch)
 
   const push = collect(state, function () {
-    render(view(state))
+    render(view())
   })
 
   function dispatch (action, data) {

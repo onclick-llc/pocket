@@ -85,7 +85,7 @@
        state.router.id = result
        state.router.to = rewrite.destination
 
-       return // early exit
+       return // exit
      }
 
      const result = pathname.match(rewrite.source)
@@ -94,7 +94,7 @@
        state.router.id = result[0]
        state.router.to = rewrite.destination
 
-       return // early exit
+       return // exit
      }
    }
 

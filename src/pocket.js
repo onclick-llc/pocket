@@ -48,7 +48,10 @@ function collect (state, render) {
  */
 
 export default function ({ state, setup }, render) {
-  const push = collect(state, function () { render(view()) })
+  const push = collect(state, function () {
+    render(view())
+  })
+
   const view = setup(state, dispatch) // hoist
 
   function dispatch (action, data) {
@@ -73,6 +76,8 @@ export default function ({ state, setup }, render) {
 
   return {
     dispatch,
-    getState: function () { return state }
+    getState: function () {
+      return state
+    }
   }
 }

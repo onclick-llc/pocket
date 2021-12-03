@@ -1,11 +1,6 @@
 
 import pocket from './pocket'
 
-/**
- *
- *
- */
-
 export function once () {
   let lock = false
   const storage = []
@@ -26,18 +21,19 @@ export function once () {
   }
 }
 
-/**
- *
- *
- */
+export function shadow (patch) {
+  return function (ref, app) {
+    window.requestAnimationFrame(function () {
+      const node = ref.vnode.node
 
-const mount = once()
+      if (node.shadowRoot == null) {
+        const root = node.attachShadow({ mode: 'open' })
+        const div = document.createElement('div')
 
-export const shadow = patch => (ref, app) => {
-  mount(function () {
-    const div = document.createElement('div')
-    ref.vnode.node.attachShadow({ mode: 'open' }).appendChild(div)
+        root.appendChild(div)
 
-    app(init => pocket(init, view => patch(div, view)))
-  })
+        app(init => pocket(init, view => patch(div, view)))
+      }
+    })
+  }
 }

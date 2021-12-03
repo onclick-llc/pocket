@@ -1,6 +1,4 @@
 
-const FF_QUIET = FF_QUIET ?? false
-
 /**
  * Debounce helper for renders
  * @function enqueue
@@ -50,16 +48,13 @@ function collect (state, render) {
  */
 
 export default function ({ state, setup }, render) {
-  const view = setup(state, dispatch)
-
-  const push = collect(state, function () {
-    render(view())
-  })
+  const push = collect(state, function () { render(view()) })
+  const view = setup(state, dispatch) // hoist
 
   function dispatch (action, data) {
     const result = action(state, data)
 
-    FF_QUIET && console.log(
+    console.log(
       'Dispatch >>',
       typeof action.name === 'string' ? action.name : '(anon)',
       typeof result === 'function' ? '(effect)' : JSON.stringify(result, null, 2)
@@ -76,5 +71,8 @@ export default function ({ state, setup }, render) {
     }
   }
 
-  return dispatch
+  return {
+    dispatch,
+    getState: function () { return state }
+  }
 }

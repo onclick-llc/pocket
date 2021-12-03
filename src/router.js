@@ -1,195 +1,150 @@
 
-const FF_ROUTE_EVENTS = FF_ROUTE_EVENTS ?? false
-const FF_ROUTE_MIDDLEWARE = FF_ROUTE_MIDDLEWARE ?? false
-const FF_ROUTE_REWRITES = FF_ROUTE_REWRITES ?? false
-
 /**
  * Decodes a query string to an object
  * @function decode
  */
 
-const queryDelimeters = /[&=]/g
+ const queryDelimeters = /[&=]/g
 
-export const decode = /* @__PURE__ */ data => {
-  const query = data.slice(1).split(queryDelimeters)
-  const result = {}
+ export function decode (data) {
+   const query = data.slice(1).split(queryDelimeters)
+   const result = {}
 
-  for (let i = 0; i < query.length; i += 2) {
-    result[query[i]] = query[i + 1]
-  }
+   for (let i = 0; i < query.length; i += 2) {
+     result[query[i]] = query[i + 1]
+   }
 
-  return result
-}
+   return result
+ }
 
-/**
+ /**
   * Encodes an object into a query string
   * @function encode
   */
 
-export const encode = /* @__PURE__ */ data => {
-  let result = '?'
+ export function encode (data) {
+   let result = '?'
 
-  for (const key in data) {
-    if (data[key] != null) {
-      result += key + '=' + data[key] + '&'
-    }
-  }
+   for (const key in data) {
+     if (data[key] != null) {
+       result += key + '=' + data[key] + '&'
+     }
+   }
 
-  return result.slice(0, -1)
-}
+   return result.slice(0, -1)
+ }
 
-/**
- * @function link
- * @example
- * link({
- *   to: '/foobar',
- *   query: {
- *     foo: 'bar'
- *   }
- * })
- */
+ /**
+  * @function link
+  * @example
+  * link({
+  *   to: '/foobar',
+  *   query: {
+  *     foo: 'bar'
+  *   }
+  * })
+  */
 
-const pushstateEvent = new CustomEvent('pocket-pushstate')
+ const pushstateEvent = new CustomEvent('pocket-pushstate')
 
-export const link = /* @__PURE__ */ data => {
-  if (data.to === history.state) {
-    return history.back()
-  }
+ export function link (data) {
+   if (data.to === history.state) {
+     return history.back()
+   }
 
-  const path = location.pathname
+   const path = location.pathname
 
-  const to = typeof data.to === 'string' ? data.to : path
-  const href = data.query ? to + encode(data.query) : to
+   const to = typeof data.to === 'string' ? data.to : path
+   const href = data.query ? to + encode(data.query) : to
 
-  history.pushState(path, null, href)
-  window.dispatchEvent(pushstateEvent)
-}
+   history.pushState(path, null, href)
+   window.dispatchEvent(pushstateEvent)
+ }
 
-/**
- * An action that syncs router state with `window.location`
- * @function sync
- */
+ /**
+  * An action that syncs router state with `window.location`
+  * @function sync
+  */
 
-const sync = ({ router }, rewrites) => {
-  const search = location.search
-  const pathname = location.pathname
+ function sync (state, rewrites) {
+   const search = location.search
+   const pathname = location.pathname
 
-  router.query = search.startsWith('?') ? decode(search) : {}
+   state.router.query = search.startsWith('?') ? decode(search) : {}
 
-  if (FF_ROUTE_REWRITES === true) {
-    for (let i = 0; i < rewrites.length; i++) {
-      const rewrite = rewrites[i]
+   for (let i = 0; i < rewrites.length; i++) {
+     const rewrite = rewrites[i]
 
-      if (typeof rewrite.source === 'function') {
-        const result = rewrite.source()
+     if (typeof rewrite.source === 'function') {
+       const result = rewrite.source()
 
-        if (result === false || result == null) {
-          continue
-        }
+       if (result === false || result == null) {
+         continue
+       }
 
-        router.id = result
-        router.to = rewrite.destination
+       state.router.id = result
+       state.router.to = rewrite.destination
 
-        return { router }
-      }
+       return // early exit
+     }
 
-      const result = pathname.match(rewrite.source)
+     const result = pathname.match(rewrite.source)
 
-      if (result !== null) {
-        router.id = result[0]
-        router.to = rewrite.destination
+     if (result !== null) {
+       state.router.id = result[0]
+       state.router.to = rewrite.destination
 
-        return { router }
-      }
-    }
-  }
+       return // early exit
+     }
+   }
 
-  router.id = null
-  router.to = pathname
+   state.router.id = null
+   state.router.to = pathname
+ }
 
-  return { router }
-}
+ /**
+  * Initialize app instance
+  * @module pocket
+  */
 
-/**
- * Apply route middleware to each page
- * @function compile
- */
+ export function router (init, app) {
+   init.state.router = {
+     id: null,
+     to: '/',
+     query: {}
+   }
 
-const compile = (init, dispatch) => {
-  const target = []
+   return app({
+     state: init.state,
+     setup (state, dispatch) {
+       let route = null
+       let destroy = null
+       let render = null
 
-  return array => {
-    array ??= []
+       listener()
 
-    for (let i = 0; i < target.length; i++) {
-      target[i](dispatch)
-    }
+       window.addEventListener('pocket-pushstate', listener)
+       window.addEventListener('popstate', listener)
 
-    for (let i = 0; i < array.length; i++) {
-      const item = init[array[i]]()
+       function listener () {
+         dispatch(sync, init.rewrites)
 
-      item.onRoute(dispatch)
-      target.push(item.onBeforeLeave)
-    }
-  }
-}
+         route = init.pages[init.state.router.to] ?? init.pages['/missing']
 
-/**
- * Apply route events to each page
- * @function routeEvents
- */
+         if (typeof destroy === 'function') {
+           destroy(state, dispatch)
+         }
 
-const routeEvents = dispatch => {
-  let target
+         if (typeof route.setup === 'function') {
+           render = route.setup(state, dispatch)
+         }
 
-  return route => {
-    if (typeof target === 'function') {
-      target(dispatch)
-    }
+         destroy = route.destroy
+       }
 
-    if (typeof route.onRoute === 'function') {
-      route.onRoute(dispatch)
-    }
-
-    target = route.onBeforeLeave
-  }
-}
-
-/**
- * Initialize app instance
- * @module pocket
- */
-
-export const router = ({ state, pages, rewrites, middleware }, app) => {
-  let route
-
-  state.router = {
-    id: null,
-    to: '/',
-    query: {}
-  }
-
-  const ctx = app({
-    state,
-    setup: route.setup
-  })
-
-  const applyMiddleware = /* @__PURE__ */ compile(middleware, ctx.dispatch)
-  const applyRouteEvents = /* @__PURE__ */ routeEvents(ctx.dispatch)
-
-  const listener = () => {
-    ctx.dispatch(sync, rewrites)
-
-    route = pages[state.router.to] || pages['/missing']
-
-    FF_ROUTE_MIDDLEWARE && applyMiddleware(route.middleware)
-    FF_ROUTE_EVENTS && applyRouteEvents(route)
-  }
-
-  listener()
-
-  window.addEventListener('pocket-pushstate', listener)
-  window.addEventListener('popstate', listener)
-
-  return ctx
-}
+       return function () {
+         return render()
+       }
+     }
+   })
+ }

@@ -32,6 +32,8 @@ export default function (init, render) {
 
   const view = init.setup(init.state, dispatch) // hoist
 
+  schedule()
+
   function dispatch (action, data) {
     const result = action(init.state, data)
 

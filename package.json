@@ -1,7 +1,7 @@
 {
   "name": "@onclick/pocket",
   "version": "0.0.0",
-  "description": "Embeddable micro framework for building web apps.",
+  "description": "Micro framework for building web apps",
   "license": "MIT",
   "author": "Dustin Dowell",
   "main": "index.js",

@@ -39,7 +39,7 @@ export default function (init, render) {
 
     console.log(
       'Dispatch >>',
-      typeof action.name === 'string' ? action.name : '(anon)',
+      action.name ? action.name : '(anon)',
       typeof result === 'function' ? '(effect)' : '(action)',
     )
 

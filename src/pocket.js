@@ -21,63 +21,41 @@ function enqueue (render) {
 }
 
 /**
- * Collect state changes for batched updates
- * @function collect
- */
-
-function collect (state, render) {
-  let batch = [state]
-
-  const schedule = enqueue(function () {
-    Object.assign.apply(Object, batch)
-    batch = [state]
-    render()
-  })
-
-  schedule()
-
-  return function (result) {
-    batch.push(result)
-    schedule()
-  }
-}
-
-/**
- * Minimalist state manager with actions and effects
+ * Micro framework for building web apps
  * @module pocket
  */
 
-export default function ({ state, setup }, render) {
-  const push = collect(state, function () {
+export default function (init, render) {
+  const schedule = enqueue(function () {
     render(view())
   })
 
-  const view = setup(state, dispatch) // hoist
+  const view = init.setup(init.state, dispatch) // hoist
 
   function dispatch (action, data) {
-    const result = action(state, data)
+    const result = action(init.state, data)
 
     console.log(
       'Dispatch >>',
       typeof action.name === 'string' ? action.name : '(anon)',
-      typeof result === 'function' ? '(effect)' : JSON.stringify(result, null, 2)
+      typeof result === 'function' ? '(effect)' : '(action)',
     )
 
     if (typeof result === 'function') {
       const effect = result(dispatch)
 
       if (effect && effect.then) {
-        return effect.then(push)
+        return effect.then(schedule)
       }
     } else {
-      push(result)
+      schedule()
     }
   }
 
   return {
     dispatch,
     getState: function () {
-      return state
+      return init.state
     }
   }
 }

@@ -18,7 +18,7 @@
  }
 
  /**
-  * Encodes an object into a query string
+  * Encodes an object to a query string
   * @function encode
   */
 

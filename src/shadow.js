@@ -22,18 +22,18 @@ export function once () {
 }
 
 export function shadow (patch) {
-  return function (ref, app) {
-    window.requestAnimationFrame(function () {
-      const node = ref.vnode.node
+  return function (node, app) {
+    if (node.shadowRoot == null) {
+      const root = node.attachShadow({ mode: 'open' })
+      const div = document.createElement('div')
 
-      if (node.shadowRoot == null) {
-        const root = node.attachShadow({ mode: 'open' })
-        const div = document.createElement('div')
+      root.appendChild(div)
 
-        root.appendChild(div)
-
-        app(init => pocket(init, view => patch(div, view)))
-      }
-    })
+      app(function (init) {
+        return pocket(init, function (view) {
+          patch(div, view)
+        })
+      })
+    }
   }
 }

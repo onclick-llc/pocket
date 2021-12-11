@@ -1,4 +1,6 @@
 
+const FF_QUIET = process.env.FF_QUIET ?? false
+
 /**
  * Debounce helper for renders
  * @function enqueue
@@ -30,14 +32,14 @@ export default function (init, render) {
     render(view())
   })
 
-  const view = init.setup(init.state, dispatch) // hoist
+  schedule() // first render
 
-  schedule()
+  const view = init.setup(init.state, dispatch) // hoist
 
   function dispatch (action, data) {
     const result = action(init.state, data)
 
-    console.log(
+    FF_QUIET && console.log(
       'Dispatch >>',
       action.name || '(anon)',
       typeof result === 'function' ? '(effect)' : '(action)',
@@ -56,6 +58,7 @@ export default function (init, render) {
 
   return {
     dispatch,
+    schedule,
     getState: function () {
       return init.state
     }

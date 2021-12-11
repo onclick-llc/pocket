@@ -22,18 +22,22 @@ export function once () {
 }
 
 export function shadow (patch) {
-  return function (node, app) {
+  let ctx = null
+
+  return function (node, init) {
+    ctx != null && ctx.schedule != null && ctx.schedule()
+
     if (node.shadowRoot == null) {
       const root = node.attachShadow({ mode: 'open' })
       const div = document.createElement('div')
 
       root.appendChild(div)
 
-      app(function (init) {
-        return pocket(init, function (view) {
-          patch(div, view)
-        })
+      ctx = pocket(init, function (view) {
+        patch(div, view)
       })
     }
+
+    return ctx
   }
 }

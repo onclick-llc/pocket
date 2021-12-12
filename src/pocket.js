@@ -39,7 +39,7 @@ export default function (init, render) {
   function dispatch (action, data) {
     const result = action(init.state, data)
 
-    FF_QUIET && console.log(
+    FF_QUIET === false && console.log(
       'Dispatch >>',
       action.name || '(anon)',
       typeof result === 'function' ? '(effect)' : '(action)',

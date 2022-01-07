@@ -6,10 +6,10 @@ const FF_QUIET = process.env.FF_QUIET ?? false
  * @function enqueue
  */
 
-function enqueue (render) {
+const enqueue = function (render) {
   let lock = false
 
-  function callback () {
+  const callback = function () {
     lock = false
     render()
   }
@@ -23,38 +23,80 @@ function enqueue (render) {
 }
 
 /**
+ * Deeply freeze objects and arrays
+ * @function deepFreeze
+ */
+
+const deepFreeze = function (state) {
+  for (const key in state) {
+    const value = state[key]
+
+    if (value !== null && typeof value === 'object' && Object.isFrozen(value) === false) {
+      freeze(value)
+    }
+  }
+
+  return Object.freeze(state)
+}
+
+/**
+ * Collect state changes for batched updates
+ * @function collect
+ */
+
+const collect = function (state, render) {
+  let batch = [state]
+
+  const schedule = enqueue(function () {
+    Object.assign.apply(Object, batch)
+    batch = [state]
+    render()
+  })
+
+  schedule()
+
+  return function (result) {
+    batch.push(result)
+    schedule()
+  }
+}
+
+/**
  * Micro framework for building web apps
  * @module pocket
  */
 
 export default function (init, render) {
-  const schedule = enqueue(function () {
+  // deepFreeze(init.state)
+
+  const schedule = collect(init.state, function () {
     render(view())
   })
 
-  schedule() // first render
+  schedule()
 
-  const view = init.setup(init.state, dispatch) // hoist
-
-  function dispatch (action, data) {
+  const dispatch = function (action, data) {
     const result = action(init.state, data)
+    const isEffect = typeof result === 'function'
 
     FF_QUIET === false && console.log(
       'Dispatch >>',
-      action.name || '(anon)',
-      typeof result === 'function' ? '(effect)' : '(action)',
+      action.name ?? '(anon)',
+      isEffect ? '(effect)' : '(action)',
     )
 
-    if (typeof result === 'function') {
+    if (isEffect) {
       const effect = result(dispatch)
 
       if (effect && effect.then) {
         return effect.then(schedule)
       }
     } else {
-      schedule()
+      schedule(deepFreeze(result))
     }
   }
+
+  const view = init.setup(init.state, dispatch)
 
   return {
     dispatch,
